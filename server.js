@@ -9,8 +9,7 @@ const port = process.env.PORT || 3000;
 // Spotify credentials
 const client_id = '9caf657d1e334f89a475d97f4d0a71ea';
 const client_secret = '1710a1b73dd74c98846b1ec1328c6b16';
-const redirect_uri = 'https://random-spotify-song-app-ccfdbaa17f18.herokuapp.com/callback
-'; // Make sure this is correct
+const redirect_uri = 'https://random-spotify-song-app-ccfdbaa17f18.herokuapp.com/callback'; // Ensure no newline here
 
 app.use(cors());
 
@@ -48,6 +47,59 @@ app.get('/callback', async (req, res) => {
                 },
             }
         );
+
+        const { access_token, refresh_token } = response.data;
+        res.redirect(`/?access_token=${access_token}&refresh_token=${refresh_token}`);
+    } catch (error) {
+        console.error('Error fetching tokens:', error);
+        res.send('Error during authentication');
+    }
+});
+
+// Step 3: Endpoint to refresh the token when it expires
+app.get('/refresh_token', async (req, res) => {
+    const refresh_token = req.query.refresh_token;
+
+    try {
+        const response = await axios.post(
+            'https://accounts.spotify.com/api/token',
+            querystring.stringify({
+                grant_type: 'refresh_token',
+                refresh_token: refresh_token,
+            }),
+            {
+                headers: {
+                    Authorization:
+                        'Basic ' +
+                        Buffer.from(client_id + ':' + client_secret).toString('base64'),
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+            }
+        );
+
+        const { access_token } = response.data;
+        res.send({ access_token });
+    } catch (error) {
+        console.error('Error refreshing token:', error);
+        res.send('Error refreshing token');
+    }
+});
+
+// Root route to display a success message or serve index.html
+app.get('/', (req, res) => {
+    const accessToken = req.query.access_token;
+
+    if (accessToken) {
+        res.send(`<h1>Login successful!</h1><p>Your access token is: ${accessToken}</p>`);
+    } else {
+        res.sendFile(path.join(__dirname, 'index.html'));
+    }
+});
+
+app.listen(port, () => {
+    console.log(`Server running on http://localhost:${port}`);
+});
+
         
         const { access_token, refresh_token } = response.data;
         res.redirect(`/?access_token=${access_token}&refresh_token=${refresh_token}`);
