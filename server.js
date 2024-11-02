@@ -17,7 +17,7 @@ app.use(cors());
 // Serve static files (make sure index.html is inside a "public" folder)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Redirect the user to Spotify's authorization URL
+// Route to Spotify's authorization URL
 app.get('/login', (req, res) => {
     const scope = 'user-read-private user-read-email';
     const authUrl = 'https://accounts.spotify.com/authorize?' +
@@ -30,7 +30,7 @@ app.get('/login', (req, res) => {
     res.redirect(authUrl);
 });
 
-// Callback endpoint to receive the authorization code
+// Callback endpoint to receive the authorization code and request tokens
 app.get('/callback', async (req, res) => {
     const code = req.query.code || null;
 
@@ -56,6 +56,35 @@ app.get('/callback', async (req, res) => {
     } catch (error) {
         console.error('Error fetching tokens:', error);
         res.send('Error during authentication');
+    }
+});
+
+// API endpoint to get a random song recommendation
+app.get('/random-song', async (req, res) => {
+    const accessToken = req.query.access_token;
+    const genre = req.query.genre || 'pop'; // default genre
+
+    try {
+        const response = await axios.get(`https://api.spotify.com/v1/recommendations`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+            params: {
+                seed_genres: genre,
+                limit: 1
+            }
+        });
+
+        const song = response.data.tracks[0];
+        res.json({
+            name: song.name,
+            artist: song.artists[0].name,
+            preview_url: song.preview_url,
+            external_url: song.external_urls.spotify
+        });
+    } catch (error) {
+        console.error('Error fetching random song:', error);
+        res.status(500).send('Error fetching song recommendation');
     }
 });
 
