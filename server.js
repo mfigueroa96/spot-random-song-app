@@ -6,18 +6,13 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Spotify credentials
 const client_id = '9caf657d1e334f89a475d97f4d0a71ea';
 const client_secret = '1710a1b73dd74c98846b1ec1328c6b16';
 const redirect_uri = 'https://random-spotify-song-app-ccfdbaa17f18.herokuapp.com/callback';
 
-// Enable CORS
 app.use(cors());
-
-// Serve static files (make sure index.html is inside a "public" folder)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Route to Spotify's authorization URL
 app.get('/login', (req, res) => {
     const scope = 'user-read-private user-read-email';
     const authUrl = 'https://accounts.spotify.com/authorize?' +
@@ -30,7 +25,6 @@ app.get('/login', (req, res) => {
     res.redirect(authUrl);
 });
 
-// Callback endpoint to receive the authorization code and request tokens
 app.get('/callback', async (req, res) => {
     const code = req.query.code || null;
 
@@ -59,10 +53,9 @@ app.get('/callback', async (req, res) => {
     }
 });
 
-// API endpoint to get a random song recommendation
 app.get('/random-song', async (req, res) => {
     const accessToken = req.query.access_token;
-    const genre = req.query.genre || 'pop'; // default genre
+    const genre = req.query.genre || 'pop';
 
     try {
         const response = await axios.get(`https://api.spotify.com/v1/recommendations`, {
@@ -88,7 +81,6 @@ app.get('/random-song', async (req, res) => {
     }
 });
 
-// Root route to serve the index.html file
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

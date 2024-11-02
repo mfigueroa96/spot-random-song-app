@@ -8,42 +8,42 @@
 <body>
     <h1>Spotify App</h1>
 
-    <button onclick="loginWithSpotify()">Login with Spotify</button>
+    <button id="login-button" onclick="loginWithSpotify()">Login with Spotify</button>
 
     <div id="genre-select" style="display: none;">
         <label for="genre">Choose a Genre:</label>
         <select id="genre">
-        <option value="acoustic">Acoustic</option>
-        <option value="afrobeat">Afrobeat</option>
-        <option value="alt-rock">Alt Rock</option>
-        <option value="alternative">Alternative</option>
-        <option value="ambient">Ambient</option>
-        <option value="anime">Anime</option>
-        <option value="blues">Blues</option>
-        <option value="children">Children</option>
-        <option value="chill">Chill</option>
-        <option value="classical">Classical</option>
-        <option value="country">Country</option>
-        <option value="dance">Dance</option>
-        <option value="dancehall">Dancehall</option>
-        <option value="disco">Disco</option>
-        <option value="edm">EDM</option>
-        <option value="electronic">Electronic</option>
-        <option value="funk">Funk</option>
-        <option value="gospel">Gospel</option>
-        <option value="hip-hop">Hip-Hop</option>
-        <option value="house">House</option>
-        <option value="indie">Indie</option>
-        <option value="jazz">Jazz</option>
-        <option value="k-pop">K-Pop</option>
-        <option value="latin">Latin</option>
-        <option value="metal">Metal</option>
-        <option value="pop">Pop</option>
-        <option value="punk">Punk</option>
-        <option value="reggae">Reggae</option>
-        <option value="rock">Rock</option>
-        <option value="soul">Soul</option>
-        <option value="techno">Techno</option>
+            <option value="acoustic">Acoustic</option>
+            <option value="afrobeat">Afrobeat</option>
+            <option value="alt-rock">Alt Rock</option>
+            <option value="alternative">Alternative</option>
+            <option value="ambient">Ambient</option>
+            <option value="anime">Anime</option>
+            <option value="blues">Blues</option>
+            <option value="children">Children</option>
+            <option value="chill">Chill</option>
+            <option value="classical">Classical</option>
+            <option value="country">Country</option>
+            <option value="dance">Dance</option>
+            <option value="dancehall">Dancehall</option>
+            <option value="disco">Disco</option>
+            <option value="edm">EDM</option>
+            <option value="electronic">Electronic</option>
+            <option value="funk">Funk</option>
+            <option value="gospel">Gospel</option>
+            <option value="hip-hop">Hip-Hop</option>
+            <option value="house">House</option>
+            <option value="indie">Indie</option>
+            <option value="jazz">Jazz</option>
+            <option value="k-pop">K-Pop</option>
+            <option value="latin">Latin</option>
+            <option value="metal">Metal</option>
+            <option value="pop">Pop</option>
+            <option value="punk">Punk</option>
+            <option value="reggae">Reggae</option>
+            <option value="rock">Rock</option>
+            <option value="soul">Soul</option>
+            <option value="techno">Techno</option>
         </select>
         <button onclick="generateRandomSong()">Generate Random Song</button>
     </div>
@@ -59,9 +59,12 @@
         const urlParams = new URLSearchParams(window.location.search);
         const accessToken = urlParams.get('access_token');
 
+        // Show the genre select section if the access token is available
         if (accessToken) {
-            document.getElementById('loginWithSpotify').style.display = 'none';
+            document.getElementById('login-button').style.display = 'none';
             document.getElementById('genre-select').style.display = 'block';
+        } else {
+            document.getElementById('login-button').style.display = 'block';
         }
 
         function loginWithSpotify() {
