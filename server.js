@@ -9,7 +9,8 @@ const port = process.env.PORT || 3000;
 // Spotify credentials
 const client_id = '9caf657d1e334f89a475d97f4d0a71ea';
 const client_secret = '1710a1b73dd74c98846b1ec1328c6b16';
-const redirect_uri = 'https://mfigueroa96.github.io/spot-random-song-app/callback'; // Make sure this is correct
+const redirect_uri = 'https://random-spotify-song-app-ccfdbaa17f18.herokuapp.com/callback
+'; // Make sure this is correct
 
 app.use(cors());
 
