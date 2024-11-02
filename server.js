@@ -40,60 +40,25 @@ app.get('/callback', async (req, res) => {
             }),
             {
                 headers: {
-                    Authorization: 'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64'),
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-            }
-        );
-
-        const { access_token, refresh_token } = response.data;
-        // Redirect back to the frontend with the tokens in the URL
-        res.redirect(`/?access_token=${access_token}&refresh_token=${refresh_token}`);
-    } catch (error) {
-        console.error('Error fetching tokens:', error);
-        res.send('Error during authentication');
-    }
-});
-
-// Step 3: Endpoint to refresh the token when it expires
-app.get('/refresh_token', async (req, res) => {
-    const refresh_token = req.query.refresh_token;
-
-    try {
-        const response = await axios.post(
-            'https://accounts.spotify.com/api/token',
-            querystring.stringify({
-                grant_type: 'refresh_token',
-                refresh_token: refresh_token,
-            }),
-            {
-                headers: {
-                    Authorization: 'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64'),
+                    Authorization:
+                        'Basic ' +
+                        Buffer.from(client_id + ':' + client_secret).toString('base64'),
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
             }
         );
 
         const { access_token } = response.data;
-        res.send({ access_token });
+        // Redirect to index.html with the access token
+        res.redirect(`/index.html?access_token=${access_token}`);
     } catch (error) {
-        console.error('Error refreshing token:', error);
-        res.send('Error refreshing token');
+        console.error('Error fetching tokens:', error);
+        res.send('Error during authentication');
     }
 });
 
-// Root route to display a success message or serve index.html
-app.get('/', (req, res) => {
-    // Check if access_token is present in the query parameters
-    const accessToken = req.query.access_token;
-
-    if (accessToken) {
-        res.send(`<h1>Login successful!</h1><p>Your access token is: ${accessToken}</p>`);
-    } else {
-        // Serve index.html if access_token is not provided
-        res.sendFile(path.join(__dirname, 'index.html'));
-    }
-});
+// Serve index.html for the root route
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
