@@ -6,18 +6,15 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Spotify credentials
-const client_id = '9caf657d1e334f89a475d97f4d0a71ea';
-const client_secret = '1710a1b73dd74c98846b1ec1328c6b16';
-const redirect_uri = 'https://random-spotify-song-app-ccfdbaa17f18.herokuapp.com/callback';
+// Spotify credentials from environment variables
+const client_id = process.env.CLIENT_ID;
+const client_secret = process.env.CLIENT_SECRET;
+const redirect_uri = process.env.REDIRECT_URI;
 
-// Enable CORS
 app.use(cors());
+app.use(express.static('public')); // To serve static files, like index.html
 
-// Serve static files (make sure index.html is inside a "public" folder)
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Redirect the user to Spotify's authorization URL
+// Step 1: Redirect the user to Spotify's authorization URL
 app.get('/login', (req, res) => {
     const scope = 'user-read-private user-read-email';
     const authUrl = 'https://accounts.spotify.com/authorize?' +
@@ -30,7 +27,7 @@ app.get('/login', (req, res) => {
     res.redirect(authUrl);
 });
 
-// Callback endpoint to receive the authorization code
+// Step 2: Spotify redirects to your callback URL with a code
 app.get('/callback', async (req, res) => {
     const code = req.query.code || null;
 
@@ -51,15 +48,49 @@ app.get('/callback', async (req, res) => {
             }
         );
 
-        const { access_token } = response.data;
-        res.redirect(`/index.html?access_token=${access_token}`);
+        const { access_token, refresh_token } = response.data;
+        // Redirect back to the frontend with the tokens in the URL
+        res.redirect(`/?access_token=${access_token}&refresh_token=${refresh_token}`);
     } catch (error) {
         console.error('Error fetching tokens:', error);
         res.send('Error during authentication');
     }
 });
 
-// Root route to serve the index.html file
+// Endpoint to get a random song based on genre
+app.get('/random_song', async (req, res) => {
+    const accessToken = req.query.access_token;
+    const genre = req.query.genre;
+
+    if (!accessToken) {
+        return res.status(400).json({ error: 'Access token is required' });
+    }
+
+    try {
+        // Make a request to Spotify’s API for genre-based recommendations
+        const response = await axios.get('https://api.spotify.com/v1/recommendations', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+            params: {
+                seed_genres: genre,
+                limit: 1,
+            },
+        });
+
+        const track = response.data.tracks[0];
+        const songData = {
+            song: track.name,
+            artist: track.artists.map(artist => artist.name).join(', '),
+            url: track.external_urls.spotify,
+        };
+
+        res.json(songData);
+    } catch (error) {
+        console.error('Error fetching random song:', error);
+        res.status(500).json({ error: 'Failed to fetch random song' });
+    }
+});
+
+// Serve index.html from the public directory
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
