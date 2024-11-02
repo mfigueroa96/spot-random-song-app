@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify App</title>
+</head>
+<body>
+    <h1>Spotify App</h1>
+
+    <!-- Genre Selection Dropdown -->
+    <label for="genre-select">Choose a Genre:</label>
+    <select id="genre-select">
+        <option value="acoustic">Acoustic</option>
+        <option value="afrobeat">Afrobeat</option>
+        <option value="alt-rock">Alt Rock</option>
+        <option value="alternative">Alternative</option>
+        <option value="ambient">Ambient</option>
+        <option value="anime">Anime</option>
+        <option value="blues">Blues</option>
+        <option value="children">Children</option>
+        <option value="chill">Chill</option>
+        <option value="classical">Classical</option>
+        <option value="country">Country</option>
+        <option value="dance">Dance</option>
+        <option value="dancehall">Dancehall</option>
+        <option value="disco">Disco</option>
+        <option value="edm">EDM</option>
+        <option value="electronic">Electronic</option>
+        <option value="funk">Funk</option>
+        <option value="gospel">Gospel</option>
+        <option value="hip-hop">Hip-Hop</option>
+        <option value="house">House</option>
+        <option value="indie">Indie</option>
+        <option value="jazz">Jazz</option>
+        <option value="k-pop">K-Pop</option>
+        <option value="latin">Latin</option>
+        <option value="metal">Metal</option>
+        <option value="pop">Pop</option>
+        <option value="punk">Punk</option>
+        <option value="reggae">Reggae</option>
+        <option value="rock">Rock</option>
+        <option value="soul">Soul</option>
+        <option value="techno">Techno</option>
+    </select>
+
+    <button onclick="generateRandomSong()">Generate Random Song</button>
+    <div id="song-info"></div>
+
+    <script>
+        // Function to get access token from URL
+        function getAccessToken() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('access_token');
+        }
+
+        async function generateRandomSong() {
+            const accessToken = getAccessToken();
+            if (!accessToken) {
+                alert('No access token found. Please log in again.');
+                return;
+            }
+
+            // Get selected genre
+            const genre = document.getElementById("genre-select").value;
+
+            // Make a request to Spotify's "Recommendations" endpoint to get a random song based on the genre
+            const response = await fetch(`https://api.spotify.com/v1/recommendations?seed_genres=${genre}&limit=1`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            });
+
+            if (!response.ok) {
+                document.getElementById('song-info').innerText = 'Error fetching song information.';
+                return;
+            }
+
+            const data = await response.json();
+            if (data.tracks && data.tracks.length > 0) {
+                const song = data.tracks[0];
+                document.getElementById('song-info').innerText = `Random ${genre} Song: ${song.name} by ${song.artists[0].name}`;
+            } else {
+                document.getElementById('song-info').innerText = `No songs found for genre ${genre}.`;
+            }
+        }
+    </script>
+</body>
+</html>
