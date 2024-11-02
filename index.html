@@ -3,140 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify Random Song Preview</title>
+    <title>Spotify App</title>
 </head>
 <body>
-    <h1>Random Song Preview</h1>
+    <h1>Spotify App</h1>
+    
+    <!-- Login Button -->
+    <button onclick="window.location.href='/login'">Login with Spotify</button>
 
-    <!-- Genre Selection Dropdown -->
-    <label for="genre">Choose a Genre:</label>
-    <select id="genre">
-        <option value="acoustic">Acoustic</option>
-        <option value="afrobeat">Afrobeat</option>
-        <option value="alt-rock">Alt Rock</option>
-        <option value="alternative">Alternative</option>
-        <option value="ambient">Ambient</option>
-        <option value="anime">Anime</option>
-        <option value="blues">Blues</option>
-        <option value="children">Children</option>
-        <option value="chill">Chill</option>
-        <option value="classical">Classical</option>
-        <option value="country">Country</option>
-        <option value="dance">Dance</option>
-        <option value="dancehall">Dancehall</option>
-        <option value="disco">Disco</option>
-        <option value="edm">EDM</option>
-        <option value="electronic">Electronic</option>
-        <option value="funk">Funk</option>
-        <option value="gospel">Gospel</option>
-        <option value="hip-hop">Hip-Hop</option>
-        <option value="house">House</option>
-        <option value="indie">Indie</option>
-        <option value="jazz">Jazz</option>
-        <option value="k-pop">K-Pop</option>
-        <option value="latin">Latin</option>
-        <option value="metal">Metal</option>
-        <option value="pop">Pop</option>
-        <option value="punk">Punk</option>
-        <option value="reggae">Reggae</option>
-        <option value="rock">Rock</option>
-        <option value="soul">Soul</option>
-        <option value="techno">Techno</option>
-    </select>
+    <!-- Genre and Mood Selection -->
+    <div id="app" style="display: none;">
+        <h2>Random Song Preview</h2>
+        <label for="genre">Choose a Genre:</label>
+        <select id="genre">
+            <option value="acoustic">Acoustic</option>
+            <option value="afrobeat">Afrobeat</option>
+            <option value="alt-rock">Alt Rock</option>
+            <option value="alternative">Alternative</option>
+            <option value="ambient">Ambient</option>
+            <option value="anime">Anime</option>
+            <option value="blues">Blues</option>
+            <option value="children">Children</option>
+            <option value="chill">Chill</option>
+            <option value="classical">Classical</option>
+            <option value="country">Country</option>
+            <option value="dance">Dance</option>
+            <option value="dancehall">Dancehall</option>
+            <option value="disco">Disco</option>
+            <option value="edm">EDM</option>
+            <option value="electronic">Electronic</option>
+            <option value="funk">Funk</option>
+            <option value="gospel">Gospel</option>
+            <option value="hip-hop">Hip-Hop</option>
+            <option value="house">House</option>
+            <option value="indie">Indie</option>
+            <option value="jazz">Jazz</option>
+            <option value="k-pop">K-Pop</option>
+            <option value="latin">Latin</option>
+            <option value="metal">Metal</option>
+            <option value="pop">Pop</option>
+            <option value="punk">Punk</option>
+            <option value="reggae">Reggae</option>
+            <option value="rock">Rock</option>
+            <option value="soul">Soul</option>
+            <option value="techno">Techno</option>
+        </select>
 
-    <button onclick="getRandomSong()">Get a Random Song</button>
-    <p id="songInfo"></p>
-    <audio id="preview" controls></audio>
+        <button onclick="getRandomSong()">Get a Random Song</button>
+
+        <div id="song-preview">
+            <p id="song-info">Loading...</p>
+            <audio id="audio-player" controls>
+                <source id="audio-source" src="" type="audio/mpeg">
+            </audio>
+        </div>
+    </div>
 
     <script>
-	const clientID = "9caf657d1e334f89a475d97f4d0a71ea";
-	const clientSecret = "1710a1b73dd74c98846b1ec1328c6b16";
-        let accessToken = null;
-        let lastTracks = []; // Array to store last 10 track IDs
-
-        async function delay(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
+        // Function to get URL parameters
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            const results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
         }
 
-        async function getAccessToken() {
-            if (accessToken) {
-                return accessToken;
-            }
-            const response = await fetch("https://accounts.spotify.com/api/token", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "Authorization": "Basic " + btoa(clientID + ":" + clientSecret),
-                },
-                body: "grant_type=client_credentials",
-            });
-            const data = await response.json();
-            accessToken = data.access_token;
-            return accessToken;
+        // Capture access token from URL and store it
+        const accessToken = getUrlParameter('access_token');
+        if (accessToken) {
+            localStorage.setItem('spotifyAccessToken', accessToken);
+            window.history.replaceState({}, document.title, "/");
+            document.getElementById("app").style.display = "block";
+        } else {
+            alert("No access token found. Please log in.");
         }
 
+        // Function to fetch a random song based on selected genre
         async function getRandomSong() {
+            const genre = document.getElementById("genre").value;
+            const token = localStorage.getItem('spotifyAccessToken');
+            
+            if (!token) {
+                alert("No access token found. Please log in.");
+                return;
+            }
+
             try {
-                const token = await getAccessToken();
-                if (!token) {
-                    console.error("No access token received.");
-                    return;
-                }
-
-                // Get the selected genre
-                const selectedGenre = document.getElementById("genre").value;
-
-                // Clear previous song info and audio source
-                document.getElementById("songInfo").textContent = "Loading...";
-                document.getElementById("preview").src = "";
-
-                let track;
-                let attempts = 0;
-                const maxAttempts = 3;
-                let retryDelay = 5000;
-
-                while (!track && attempts < maxAttempts) {
-                    const response = await fetch(`https://api.spotify.com/v1/recommendations?limit=1&seed_genres=${selectedGenre}`, {
-                        headers: {
-                            "Authorization": "Bearer " + token,
-                        },
-                    });
-
-                    if (response.status === 429) {
-                        console.warn(`Rate limit hit. Retrying after ${retryDelay / 1000} seconds...`);
-                        await delay(retryDelay);
-                        retryDelay *= 2;
-                        attempts += 1;
-                        continue;
+                const response = await fetch(`https://api.spotify.com/v1/recommendations?limit=1&seed_genres=${genre}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token
                     }
+                });
 
-                    const data = await response.json();
-                    if (data.tracks && data.tracks.length > 0) {
-                        track = data.tracks[0];
-                        if (lastTracks.includes(track.id)) {
-                            track = null;
-                        }
-                    }
-
-                    attempts += 1;
-                }
-
-                if (track) {
-                    lastTracks.push(track.id);
-                    if (lastTracks.length > 10) lastTracks.shift();
-
-                    document.getElementById("songInfo").textContent = `${track.name} by ${track.artists[0].name}`;
-                    if (track.preview_url) {
-                        document.getElementById("preview").src = track.preview_url;
-                    } else {
-                        document.getElementById("songInfo").textContent += " (No preview available)";
-                    }
+                const data = await response.json();
+                
+                if (data.tracks && data.tracks.length > 0) {
+                    const track = data.tracks[0];
+                    document.getElementById("song-info").innerText = `Song: ${track.name} by ${track.artists[0].name}`;
+                    document.getElementById("audio-source").src = track.preview_url;
+                    document.getElementById("audio-player").load();
                 } else {
-                    document.getElementById("songInfo").textContent = "No tracks found or rate limit exceeded. Please try again later.";
+                    document.getElementById("song-info").innerText = "No tracks found.";
                 }
             } catch (error) {
-                console.error("Error fetching random song:", error);
-                document.getElementById("songInfo").textContent = "Error fetching song.";
+                console.error("Error fetching song:", error);
+                document.getElementById("song-info").innerText = "Error fetching song.";
             }
         }
     </script>
