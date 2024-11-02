@@ -11,9 +11,13 @@ const client_id = '9caf657d1e334f89a475d97f4d0a71ea';
 const client_secret = '1710a1b73dd74c98846b1ec1328c6b16';
 const redirect_uri = 'https://random-spotify-song-app-ccfdbaa17f18.herokuapp.com/callback';
 
+// Enable CORS
 app.use(cors());
 
-// Step 1: Redirect the user to Spotify's authorization URL
+// Serve static files (make sure index.html is inside a "public" folder)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Redirect the user to Spotify's authorization URL
 app.get('/login', (req, res) => {
     const scope = 'user-read-private user-read-email';
     const authUrl = 'https://accounts.spotify.com/authorize?' +
@@ -26,7 +30,7 @@ app.get('/login', (req, res) => {
     res.redirect(authUrl);
 });
 
-// Step 2: Spotify redirects to your callback URL with a code
+// Callback endpoint to receive the authorization code
 app.get('/callback', async (req, res) => {
     const code = req.query.code || null;
 
@@ -41,15 +45,13 @@ app.get('/callback', async (req, res) => {
             {
                 headers: {
                     Authorization:
-                        'Basic ' +
-                        Buffer.from(client_id + ':' + client_secret).toString('base64'),
+                        'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64'),
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
             }
         );
 
         const { access_token } = response.data;
-        // Redirect to index.html with the access token
         res.redirect(`/index.html?access_token=${access_token}`);
     } catch (error) {
         console.error('Error fetching tokens:', error);
@@ -57,8 +59,10 @@ app.get('/callback', async (req, res) => {
     }
 });
 
-// Serve index.html for the root route
-app.use(express.static(path.join(__dirname, 'public')));
+// Root route to serve the index.html file
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
